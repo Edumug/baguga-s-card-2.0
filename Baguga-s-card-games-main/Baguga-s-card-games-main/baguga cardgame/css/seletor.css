@@ -1,0 +1,146 @@
+.seletor {
+    width: min(1080px, 92%);
+    margin: auto;
+    padding: 45px 0;
+}
+.cabecalho {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 35px;
+}
+.cabecalho span, .variacoes > span {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 2px;
+}
+h1 {
+    margin-top: 5px;
+    font-size: 34px;
+}
+.codigo {
+    padding: 12px 18px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--muted);
+}
+.codigo strong {
+    color: var(--text);
+    margin-left: 8px;
+    letter-spacing: 2px;
+}
+.jogos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+.jogo-card {
+    min-height: 175px;
+    padding: 22px;
+    text-align: left;
+    color: var(--text);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.18s, border 0.18s, background 0.18s, box-shadow 0.18s;
+}
+.jogo-card:hover {
+    transform: translateY(-4px);
+    background: #fafafa;
+    border-color: #777;
+    box-shadow: var(--shadow-hover);
+}
+.jogo-card.selecionado {
+    border: 2px solid var(--black);
+    background: #fafafa;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, .08);
+}
+.icone {
+    font-size: 38px;
+    margin-bottom: 18px;
+}
+.nome {
+    font-size: 21px;
+    font-weight: bold;
+}
+.descricao {
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+.jogadores {
+    display: block;
+    margin-top: 14px;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 11px;
+}
+.variacoes {
+    margin-top: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+select {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    outline: none;
+    color: var(--text);
+    background: #fff;
+}
+.mensagem {
+    min-height: 25px;
+    margin-top: 15px;
+    color: var(--muted);
+    font-size: 13px;
+}
+footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 20px;
+}
+footer button {
+    padding: 13px 20px;
+    border: 1px solid var(--black);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.voltar {
+    background: #fff;
+    color: var(--text);
+}
+.voltar:hover {
+    background: #f0f0f0;
+}
+.confirmar {
+    flex: 1;
+    max-width: 350px;
+    background: var(--black);
+}
+.confirmar:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+}
+
+@media(max-width: 750px) {
+    .jogos {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media(max-width: 500px) {
+    .jogos {
+        grid-template-columns: 1fr;
+    }
+    .cabecalho {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+}

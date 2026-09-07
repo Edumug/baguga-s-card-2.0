@@ -1,0 +1,243 @@
+.topo {
+    height: 72px;
+    display: flex;
+    align-items: center;
+    padding: 0 32px;
+    background: #fff;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -.3px;
+}
+
+.cartas-logo {
+    display: flex;
+    gap: 2px;
+}
+
+.cartas-logo span {
+    width: 22px;
+    height: 31px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    color: #111;
+    border: 1px solid #111;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+.inicio {
+    min-height: calc(100vh - 122px);
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 80px;
+    padding: 50px 35px;
+}
+
+.painel-criar {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.btn-principal,
+.btn-secundario {
+    width: 100%;
+}
+
+.btn-principal {
+    background: #000;
+    color: #fff;
+}
+
+.btn-principal:hover:not(:disabled) {
+    background: #222;
+}
+
+.btn-secundario {
+    min-width: 110px;
+    background: #fff;
+    color: #111;
+}
+
+.btn-secundario:hover:not(:disabled) {
+    background: #f2f2f2;
+}
+
+.separador {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+}
+
+.separador span {
+    flex: 1;
+    height: 1px;
+    background: #e1e1e1;
+}
+
+.separador label {
+    color: #888;
+    font-size: 12px;
+}
+
+.entrada {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.entrada label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.entrada-linha {
+    display: flex;
+    gap: 8px;
+}
+
+.entrada input {
+    height: 44px;
+    background: #fff;
+    color: #111;
+}
+
+.entrada input#codigoSala {
+    text-align: center;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.entrada #nomeJogador {
+    text-align: left;
+    letter-spacing: normal;
+    text-transform: none;
+    padding: 0 13px;
+}
+
+.entrada > #nomeJogador {
+    width: 100%;
+    flex: none;
+}
+
+.mensagem {
+    margin-top: 14px;
+    min-height: 20px;
+    color: #111;
+    font-size: 13px;
+}
+
+.painel-visual {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    text-align: left;
+    padding: 0;
+}
+
+.cartas-grandes {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 26px;
+    transform: none;
+}
+
+.cartas-grandes div {
+    width: 54px;
+    height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    color: #111;
+    border: 1px solid #111;
+    border-radius: 5px;
+    font-size: 32px;
+    box-shadow: none;
+}
+
+.painel-visual h2 {
+    font-size: 28px;
+    line-height: 1.2;
+    margin-bottom: 10px;
+}
+
+.painel-visual p {
+    max-width: 420px;
+    color: #666;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.rodape {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    color: #aaa;
+    font-size: 14px;
+    border-top: 1px solid #eee;
+}
+
+@media (max-width: 800px) {
+    .topo {
+        height: 64px;
+        padding: 0 20px;
+    }
+
+    .logo h1 {
+        font-size: 18px;
+    }
+
+    .inicio {
+        grid-template-columns: 1fr;
+        gap: 50px;
+        min-height: auto;
+        padding: 45px 25px;
+    }
+
+    .painel-visual {
+        align-items: center;
+        text-align: center;
+    }
+
+    .rodape {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .cartas-grandes div {
+        width: 45px;
+        height: 64px;
+        font-size: 27px;
+    }
+
+    .painel-visual h2 {
+        font-size: 24px;
+    }
+
+    .entrada-linha {
+        flex-direction: column;
+    }
+}

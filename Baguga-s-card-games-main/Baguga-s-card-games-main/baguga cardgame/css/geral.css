@@ -1,0 +1,143 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-soft: #f7f7f7;
+    --surface-hover: #f0f0f0;
+    --border: #d9d9d9;
+    --border-soft: #e5e7eb;
+    --border-strong: #111111;
+    --text: #111111;
+    --muted: #666666;
+    --text-muted: #667085;
+    --accent: #b42318;
+    --accent-soft: #fff1f0;
+    --black: #000000;
+    --red: #e53935;
+    --green: #198754;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 5px 16px rgba(0, 0, 0, 0.12);
+    --radius: 6px;
+    --font: Arial, Helvetica, sans-serif;
+}
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+}
+
+body {
+    font-family: var(--font);
+    background: #f7f7f8;
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.4;
+    overflow-x: hidden;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+    border: 1px solid var(--black);
+    border-radius: var(--radius);
+    padding: 10px 18px;
+    background: var(--black);
+    color: #fff;
+    font-weight: 600;
+    transition: background .15s, color .15s, transform .15s, box-shadow .15s;
+}
+
+button:hover:not(:disabled) {
+    background: #2a2a2a;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+input,
+select {
+    width: 100%;
+    border: 1px solid #bdbdbd;
+    border-radius: var(--radius);
+    background: #fff;
+    color: var(--text);
+    padding: 11px 13px;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+
+input:focus,
+select:focus {
+    border-color: var(--black);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, .08);
+}
+
+input::placeholder {
+    color: #999;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c5c5c5;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+.escondido {
+    display: none !important;
+}
+
+.texto-dourado {
+    color: var(--text);
+}
+
+.sombra {
+    box-shadow: var(--shadow);
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
