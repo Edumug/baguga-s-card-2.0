@@ -1,392 +1,43 @@
-import { database } from "./firebase-config.js";
-import { ref, onValue, runTransaction, update, onDisconnect, remove } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
-import { criarEstadoPorJogo, normalizarEstado } from "./stateManager.js";
-import { executarAcaoBot } from "./js/botController.js";
-import { removerAusentes, elementoCarta, mostrarToast, nomeDe } from "./jogo-base.js";
-import * as Truco from "./jogos/truco.js?v=3";
+import {database} from "./firebase-config.js";
+import {ref,onValue,update,remove,runTransaction,get,onDisconnect} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
+import {criarEstadoPorJogo,normalizarEstado} from "./stateManager.js";
+import {elementoCarta,nomeDe,mostrarToast,rank} from "./jogo-base.js";
+import * as Truco from "./jogos/truco.js";
 import * as Blackjack from "./jogos/blackjack.js";
 import * as Pife from "./jogos/pife.js";
-import * as Buraco from "./jogos/buraco.js";
-import * as Poker from "./jogos/poker.js";
 
-const codigo = new URLSearchParams(location.search).get("codigo");
-const jogadorId = sessionStorage.getItem("jogadorId");
-if (!codigo || !jogadorId) { location.href = "index.html"; throw new Error("Sala ou jogador não encontrados."); }
-
-const salaRef = ref(database, `salas/${codigo}`);
-const meuRef = ref(database, `salas/${codigo}/jogadores/${jogadorId}`);
-const desconector = onDisconnect(meuRef);
-desconector.remove();
-const $ = id => document.getElementById(id);
-
-const ui = { 
-    codigo: $("codigoSala"), 
-    nome: $("nomeJogo"), 
-    mao: $("minhasCartas"), 
-    mesa: $("cartasMesa"), 
-    seqAdversario: $("sequenciasAdversario"),
-    seqPropria: $("sequenciasPropria"),
-    msg: $("mensagemJogo"), 
-    placar: $("listaPlacar"), 
-    participantesExtras: $("participantesExtras"),
-    listaParticipantesExtras: $("listaParticipantesExtras"),
-    comprar: $("btnComprar"), 
-    passar: $("btnPassar"), 
-    comprarDescarte: $("btnComprarDescarte"), 
-    truco: $("controlesTruco"), 
-    respostas: $("respostasTruco"), 
-    aceitar: $("btnAceitarTruco"), 
-    recusar: $("btnRecusarTruco"), 
-    aumentar: $("btnAumentarTruco"), 
-    nova: $("btnNovaRodada"), 
-    trocar: $("btnTrocarJogo"), 
-    sair: $("btnSair"), 
-    poker: $("controlesPoker"), 
-    fold: $("btnFold"), 
-    call: $("btnCall"), 
-    raise: $("btnRaise"), 
-    raiseValor: $("raiseValor"), 
-    rodada: $("infoRodada"), 
-    aposta: $("infoAposta") 
-};
-
-ui.codigo.textContent = codigo;
-const nomes = { truco: "Truco", blackjack: "Blackjack", pife: "Pife", buraco: "Buraco", poker: "Poker" };
-const jogos = { truco: Truco, blackjack: Blackjack, pife: Pife, buraco: Buraco, poker: Poker };
-let souDono = false;
-let tipoAtual = null;
-let timerBot = null;
-let timerRevelarVaza = null;
-let selecionadasBuraco = [];
-
-function jogadores(js) {
-    const lista = Object.entries(js).sort(([, a], [, b]) => (a.ordem || 0) - (b.ordem || 0));
-    const meuIndice = lista.findIndex(([id]) => id === jogadorId);
-    const rotacionada = meuIndice < 0 ? lista : [...lista.slice(meuIndice), ...lista.slice(0, meuIndice)];
-    // O próximo da lista sempre fica à direita de quem está vendo a mesa.
-    // Assim, a sequência de turnos é baixo → direita → cima → esquerda.
-    const slots = ["jogadorDireita", "jogadorSuperior", "jogadorEsquerda"];
-    slots.forEach(id => { $(id).style.visibility = "hidden"; $(id).removeAttribute("data-jogador-id"); });
-    rotacionada.slice(1).forEach(([id, jogador], indice) => {
-        const el = $(slots[indice]);
-        if (!el) return;
-        el.style.visibility = "visible"; el.dataset.jogadorId = id;
-        el.dataset.equipe = jogador.equipe || "";
-        el.querySelector(".nome").textContent = jogador.nome || "Jogador";
-        el.querySelector(".tipo").textContent = jogador.tipo === "bot" ? "BOT" : jogador.dono ? "Dono" : "Jogador";
-        el.querySelector(".avatar").textContent = jogador.tipo === "bot" ? "🤖" : "👤";
-    });
-    const eu = js[jogadorId];
-    $("jogadorPrincipal").dataset.jogadorId = jogadorId;
-    $("jogadorPrincipal").dataset.equipe = eu?.equipe || "";
-    $("jogadorPrincipal").querySelector(".nome").textContent = eu?.nome || "Você";
-    souDono = !!eu?.dono;
-    mostrarParticipantesExtras(rotacionada.slice(4));
+const p=new URLSearchParams(location.search),codigo=p.get("codigo"),jogadorId=sessionStorage.getItem("jogadorId");
+if(!codigo||!jogadorId){location.href="index.html";throw new Error("Sala inválida");}
+const salaRef=ref(database,`salas/${codigo}`),meuRef=ref(database,`salas/${codigo}/jogadores/${jogadorId}`);onDisconnect(meuRef).remove();
+const $=id=>document.getElementById(id), ui={nomeJogo:$('nomeJogo'),codigo:$('codigoSala'),fase:$('faseLabel'),rodada:$('infoRodada'),aposta:$('infoAposta'),msg:$('mensagemJogo'),mesa:$('cartasMesa'),dealer:$('dealerArea'),extra:$('mesaExtra'),mao:$('minhasCartas'),help:$('handHelp'),players:$('listaParticipantes'),score:$('listaPlacar'),comprar:$('btnComprar'),passar:$('btnPassar'),desc:$('btnComprarDescarte'),truco:$('controlesTruco'),respostas:$('respostasTruco'),aceitar:$('btnAceitarTruco'),aumentar:$('btnAumentarTruco'),recusar:$('btnRecusarTruco'),nova:$('btnNovaRodada'),trocar:$('btnTrocarJogo'),organizar:$('btnOrganizar')};
+ui.codigo.textContent=codigo;
+let salaAtual=null,tipo=null,timerBot=null,maoCache=[];
+const jogos={truco:Truco,blackjack:Blackjack,pife:Pife};
+const nomes={truco:"Truco",blackjack:"Blackjack",pife:"Pife"};
+function participantes(js,e){ui.players.innerHTML="";const ids=Object.entries(js).sort(([,a],[,b])=>(a.ordem||0)-(b.ordem||0));ids.forEach(([id,j])=>{const row=document.createElement('div');row.className='player-line';if(e?.atual===id&&!e.fim)row.classList.add('active');const chip=document.createElement('span');chip.className='player-chip';chip.textContent=j.tipo==='bot'?'◆':j.dono?'♛':'●';const wrap=document.createElement('div'),n=document.createElement('strong');n.textContent=id===jogadorId?`${j.nome||'Você'} · você`:j.nome||'Jogador';const s=document.createElement('small');s.textContent=j.tipo==='bot'?'BOT':j.dono?'DONO':'JOGADOR';wrap.append(n,s);row.append(chip,wrap);ui.players.append(row);});}
+function placar(js,e,t){ui.score.innerHTML="";if(t==='truco'){(e.pontos||[0,0]).forEach((v,i)=>{const row=document.createElement('div');row.className='score-row';row.innerHTML=`<span>Equipe ${i===0?'A':'B'}</span><strong>${v}</strong>`;ui.score.append(row);});return;}for(const id of e.ids||[]){const row=document.createElement('div');row.className='score-row';const valor=t==='blackjack'?(e.placar?.[id]||0):(e.placar?.[id]||0);row.innerHTML=`<span>${nomeDe(js,id)}</span><strong>${valor}</strong>`;ui.score.append(row);}}
+function resetActions(){[ui.comprar,ui.passar,ui.desc,ui.nova].forEach(x=>x.classList.add('escondido'));ui.truco.classList.add('escondido');ui.respostas.classList.add('escondido');ui.dealer.innerHTML="";ui.extra.innerHTML="";ui.mesa.innerHTML="";}
+function showCard(c,click,hidden=false){if(hidden)return elementoCarta({valor:'🂠',naipe:''},click);return elementoCarta(c,click);}
+function render(e,js){e=normalizarEstado(e);tipo=e.tipo;ui.nomeJogo.textContent=nomes[tipo]||'Jogo';ui.msg.textContent=e.resultado||'';ui.fase.textContent=tipo==='truco'?'VAZA':tipo==='blackjack'?'MÃO':'TURNO';ui.rodada.textContent=tipo==='truco'?`${e.rodada||1}/3`:tipo==='blackjack'?(e.fim?'resultado':'rodada 1'):(e.etapa==='comprar'?'comprar':'descartar');ui.aposta.textContent=tipo==='truco'?`× ${e.valor||1}`:tipo==='blackjack'?`Dealer`:`${e.descarte?.length||0} no descarte`;participantes(js,e);placar(js,e,tipo);resetActions();
+ const minhaVez=e.atual===jogadorId&&!e.fim; const mao=e.maos?.[jogadorId]||[];maoCache=mao;
+ ui.help.textContent=e.fim?'Confira o resultado':minhaVez?(tipo==='pife'?`Sua vez: ${e.etapa==='comprar'?'compre uma carta':'descarte uma carta'}`:'Sua vez — escolha uma ação'):'Aguardando o próximo jogador';
+ if(tipo==='blackjack'){e.dealer?.forEach((c,i)=>ui.dealer.append(showCard(c,null,i===1&&!e.fim)));if(!e.fim){ui.comprar.classList.remove('escondido');ui.passar.classList.remove('escondido');ui.comprar.disabled=!minhaVez;ui.passar.disabled=!minhaVez;ui.msg.textContent=e.resultado||`Sua pontuação: ${Blackjack.pontuacao(mao)}${minhaVez?' · sua vez':''}`;}else ui.msg.textContent=e.resultado||'Rodada encerrada.';}
+ if(tipo==='truco'){const vira=document.createElement('div');vira.className='eyebrow';vira.textContent=`VIRA ${e.vira?.valor||''}${e.vira?.naipe||''}`;ui.extra.append(vira);Object.values(e.jogadas||{}).forEach(c=>ui.mesa.append(elementoCarta(c)));const pedido=e.pedido?.valor;if(pedido&&e.pedido.para===jogadorId){ui.respostas.classList.remove('escondido');ui.aumentar.disabled=!Truco.proximoPedido(pedido);}else if(minhaVez&&!pedido){ui.truco.classList.remove('escondido');ui.truco.querySelectorAll('button').forEach(b=>b.disabled=Number(b.dataset.pedido)!==Truco.proximoPedido(e.valor));}}
+ if(tipo==='pife'){const topo=e.descarte?.at(-1);if(topo)ui.mesa.append(elementoCarta(topo));if(minhaVez&&e.etapa==='comprar'){ui.comprar.classList.remove('escondido');ui.desc.classList.remove('escondido');ui.comprar.disabled=!e.deck?.length;ui.desc.disabled=!e.descarte?.length;} }
+ ui.mao.innerHTML='';mao.forEach((c,i)=>{const pode=(tipo==='truco'&&minhaVez&&!e.pedido)||(tipo==='pife'&&minhaVez&&e.etapa==='descartar');ui.mao.append(elementoCarta(c,pode?()=>acaoCarta(e,i):null));});
+ if(e.fim){ui.nova.classList.remove('escondido');ui.nova.disabled=e.partidaEncerrada===true;if(e.partidaEncerrada)ui.nova.textContent='Partida encerrada';}
+ if(timerBot)clearTimeout(timerBot);const atual=js[e.atual];if(atual?.tipo==='bot'&&!e.fim)timerBot=setTimeout(()=>jogarBot(e,js,e.atual),700);
 }
-
-function mostrarParticipantesExtras(extras) {
-    if (!ui.participantesExtras || !ui.listaParticipantesExtras) return;
-    ui.listaParticipantesExtras.innerHTML = "";
-    ui.participantesExtras.classList.toggle("escondido", extras.length === 0);
-    extras.forEach(([id, jogador]) => {
-        const linha = document.createElement("div");
-        linha.className = "participante-extra";
-        if (id === pendingSnapshot?.estado?.atual) linha.classList.add("vez");
-        if (jogador.equipe) {
-            const marcador = document.createElement("span");
-            marcador.className = `marcador-equipe ${jogador.equipe}`;
-            linha.appendChild(marcador);
-        }
-        const nome = document.createElement("span");
-        nome.textContent = `${jogador.tipo === "bot" ? "🤖 " : "👤 "}${jogador.nome || "Jogador"}`;
-        linha.appendChild(nome);
-        ui.listaParticipantesExtras.appendChild(linha);
-    });
-}
-
-function preencherPlacar(linhas) {
-    ui.placar.innerHTML = "";
-    linhas.forEach(({ nome, valor, detalhe, equipe }) => {
-        const linha = document.createElement("div");
-        linha.className = "placar-jogador";
-        if (equipe) linha.dataset.equipe = equipe;
-        const titulo = document.createElement("span");
-        titulo.textContent = detalhe ? `${nome} · ${detalhe}` : nome;
-        const pontos = document.createElement("strong");
-        pontos.textContent = valor;
-        linha.append(titulo, pontos);
-        ui.placar.append(linha);
-    });
-}
-
-function nomeDupla(ids, numero, js, equipes = {}) {
-    return ids
-        .filter((id, indice) => equipes[id] ? (equipes[id] === "azul" ? 0 : 1) === numero : (ids.length === 4 ? indice % 2 === numero : indice === numero))
-        .map(id => nomeDe(js, id))
-        .join(" e ");
-}
-
-function atualizarPlacar(estado, js, tipo) {
-    if (tipo === "truco") {
-        preencherPlacar([0, 1].map(numero => ({
-            nome: nomeDupla(estado.ids, numero, js, estado.equipes),
-            valor: estado.pontosDupla?.[numero] || 0,
-            detalhe: "pontos",
-            equipe: numero === 0 ? "azul" : "vermelho"
-        })));
-        return;
-    }
-
-    if (tipo === "buraco") {
-        const quantidade = estado.ids.length === 4 ? 2 : estado.ids.length;
-        preencherPlacar(Array.from({ length: quantidade }, (_, numero) => ({
-            nome: nomeDupla(estado.ids, numero, js, estado.equipes),
-            valor: estado.pontos?.[`dupla_${numero}`] || 0,
-            detalhe: "pontos",
-            equipe: numero === 0 ? "azul" : "vermelho"
-        })));
-        return;
-    }
-
-    if (tipo === "poker") {
-        preencherPlacar(estado.ids.map(id => ({
-            nome: nomeDe(js, id),
-            valor: estado.fichas?.[id] || 0,
-            detalhe: "fichas"
-        })));
-        return;
-    }
-
-    preencherPlacar(estado.ids.map(id => ({
-        nome: nomeDe(js, id),
-        valor: estado.placar?.[id] || 0,
-        detalhe: "vitórias"
-    })));
-}
-
-function render(e, js, tipo) {
-    tipoAtual = tipo;
-    atualizarPlacar(e, js, tipo);
-    if (ui.rodada) ui.rodada.textContent = tipo === "truco" ? `Vaza ${e.rodada || 1}/3` : e.fase || "Partida";
-    if (ui.aposta) ui.aposta.textContent = tipo === "truco" ? `Aposta: ${e.valor || 1}` : e.pote !== undefined ? `Pote: ${e.pote}` : "";
-    ui.mao.innerHTML = ""; ui.mesa.innerHTML = "";
-    
-    if (ui.seqAdversario && ui.seqPropria) {
-        ui.seqAdversario.innerHTML = "";
-        ui.seqPropria.innerHTML = "";
-        ui.seqAdversario.classList.toggle("escondido", tipo !== "buraco");
-        ui.seqPropria.classList.toggle("escondido", tipo !== "buraco");
-    }
-
-    ui.comprar.disabled = true; ui.passar.disabled = true;
-    ui.truco.classList.add("escondido"); ui.respostas.classList.add("escondido"); ui.poker.classList.add("escondido");
-    document.querySelectorAll(".jogador").forEach(el => el.classList.toggle("vez", el.dataset.jogadorId === e.atual && !e.fim));
-    const minhaVez = e.atual === jogadorId && !e.fim;
-    if (tipo !== "buraco" || !minhaVez) selecionadasBuraco = [];
-    if (ui.comprarDescarte) ui.comprarDescarte.classList.toggle("escondido", tipo !== "buraco" || !minhaVez || e.etapa !== "comprar");
-    ui.mesa.onclick = null;
-
-    const mao = e.maos?.[jogadorId] || [];
-    if (tipo === "truco") mao.forEach((c, i) => ui.mao.append(elementoCarta(c, minhaVez && !e.pedido ? () => Truco.acoesTruco(salaRef, jogadorId).jogar(i) : null)));
-    else if (tipo === "pife") mao.forEach((c, i) => ui.mao.append(elementoCarta(c, minhaVez && e.etapa === "descartar" ? () => Pife.acoesPife(salaRef, jogadorId).descartar(i) : null)));
-    else if (tipo === "buraco") mao.forEach((c, i) => {
-        const elemento = elementoCarta(c, minhaVez && e.etapa === "descartar" ? () => {
-            selecionadasBuraco = selecionadasBuraco.includes(i) ? selecionadasBuraco.filter(indice => indice !== i) : [...selecionadasBuraco, i];
-            render(e, js, tipo);
-        } : null);
-        if (selecionadasBuraco.includes(i)) elemento.classList.add("selecionada");
-        ui.mao.append(elemento);
-    });
-    else mao.forEach(c => ui.mao.append(elementoCarta(c)));
-
-    if (tipo === "blackjack") {
-        e.dealer.forEach((c, i) => ui.mesa.append(elementoCarta(i === 1 && !e.fim ? { valor: "🂠", naipe: "" } : c)));
-        ui.comprar.disabled = !minhaVez; ui.passar.disabled = !minhaVez;
-        ui.msg.textContent = e.resultado || `Sua mão: ${Blackjack.pontuacao(mao)}. ${minhaVez ? "Sua vez." : "Aguardando outro jogador."}`;
-    } else if (tipo === "truco") {
-        Object.values(e.jogadas || {}).forEach(c => ui.mesa.append(elementoCarta(c)));
-        const podePedir = minhaVez && !e.pedido && e.ultimoPedidoPor !== jogadorId && Truco.pedidoSeguinte(e.valor);
-        ui.truco.classList.toggle("escondido", !podePedir);
-        ui.truco.querySelectorAll("button").forEach(b => b.disabled = Number(b.dataset.pedido) !== Truco.pedidoSeguinte(e.valor));
-        const responder = e.pedido?.para === jogadorId; 
-        ui.respostas.classList.toggle("escondido", !responder);
-        ui.msg.textContent = e.resultado || (e.revelarVazaAte
-            ? "Última carta na mesa…"
-            : e.pedido
-                ? `Pedido de ${e.pedido.valor}! ${responder ? "Responda." : "Aguardando resposta."}`
-                : `Vira: ${e.vira.valor}${e.vira.naipe}. ${minhaVez ? "Jogue uma carta ou peça Truco." : `Aguardando ${nomeDe(js, e.atual)}.`}`);
-    } else if (tipo === "pife" || tipo === "buraco") {
-        if (tipo === "buraco" && ui.seqAdversario && ui.seqPropria) {
-            Object.entries(e.baixadas || {}).forEach(([donoId, grupos]) => {
-                if (!grupos.length) return;
-                const ehProprio = donoId === jogadorId;
-                const containerAlvo = ehProprio ? ui.seqPropria : ui.seqAdversario;
-
-                const section = document.createElement("div");
-                section.className = `sequencia-grupo ${ehProprio ? "sequencia-propria" : "sequencia-adversaria"}`;
-
-                const titulo = document.createElement("div");
-                titulo.className = "sequencia-titulo";
-                titulo.textContent = ehProprio ? "🟥 Suas sequências" : `🟦 Sequências de ${nomeDe(js, donoId)}`;
-                section.appendChild(titulo);
-
-                grupos.forEach((grupo, grupoIndice) => {
-                    const jogo = document.createElement("div");
-                    jogo.className = `jogo-baixado ${ehProprio ? "jogo-proprio" : ""}`;
-                    jogo.dataset.jogadorId = donoId;
-
-                    if (ehProprio) {
-                        jogo.title = "Clique para encaixar as cartas selecionadas";
-                        jogo.onclick = evento => {
-                            evento.stopPropagation();
-                            if (!minhaVez || e.etapa !== "descartar" || !selecionadasBuraco.length) return;
-                            Buraco.acoesBuraco(salaRef, jogadorId).encaixar(grupoIndice, selecionadasBuraco);
-                            selecionadasBuraco = [];
-                        };
-                    }
-
-                    grupo.forEach(cartaBaixada => jogo.append(elementoCarta(cartaBaixada)));
-                    section.appendChild(jogo);
-                });
-
-                containerAlvo.appendChild(section);
-            });
-        }
-        const topo = e.descarte?.at(-1);
-        if (topo) {
-            const cartaDescarte = elementoCarta(topo, tipo === "buraco" && minhaVez && e.etapa === "descartar" ? evento => {
-                evento.stopPropagation();
-                if (selecionadasBuraco.length !== 1) return;
-                Buraco.acoesBuraco(salaRef, jogadorId).descartar(selecionadasBuraco[0]);
-                selecionadasBuraco = [];
-            } : null);
-            cartaDescarte.classList.add("descarte-mesa");
-            ui.mesa.append(cartaDescarte);
-        }
-        ui.comprar.disabled = !["pife", "buraco"].includes(tipo) || !minhaVez || e.etapa !== "comprar";
-        if (tipo === "buraco") {
-            ui.msg.textContent = e.resultado || (minhaVez ? e.etapa === "comprar" ? "Compre do monte ou do descarte." : "Baixe uma combinação ou descarte uma carta." : `Aguardando ${nomeDe(js, e.atual)}.`);
-        } else {
-            ui.msg.textContent = e.resultado || (minhaVez ? e.etapa === "comprar" ? "Compre uma carta." : "Descarte uma carta." : `Aguardando ${nomeDe(js, e.atual)}.`);
-        }
-    } else {
-        e.mesa.forEach(c => ui.mesa.append(elementoCarta(c))); ui.poker.classList.remove("escondido");
-        ui.msg.textContent = e.resultado || `Texas Hold'em: ${e.fase}. ${minhaVez ? "Escolha uma ação." : `Aguardando ${nomeDe(js, e.atual)}.`}`;
-        ui.fold.disabled = ui.call.disabled = ui.raise.disabled = !minhaVez;
-    }
-    ui.nova.classList.toggle("escondido", !(e.fim && souDono && !e.partidaEncerrada));
-    ui.trocar.classList.toggle("escondido", !(e.fim && souDono));
-}
-
-function executarBot(estado, js) {
-    clearTimeout(timerBot);
-    const id = estado.pedido?.para || estado.atual;
-    if (estado.fim || !id || js[id]?.tipo !== "bot") return;
-    timerBot = setTimeout(() => {
-        executarAcaoBot(estado, id, salaRef);
-    }, 650);
-}
-
-function resolverVazaDepoisDaPausa(estado) {
-    clearTimeout(timerRevelarVaza);
-    if (estado.tipo !== "truco" || !estado.revelarVazaAte || estado.fim) return;
-
-    const espera = Math.max(0, estado.revelarVazaAte - Date.now());
-    timerRevelarVaza = setTimeout(() => {
-        runTransaction(salaRef, sala => {
-            const partida = sala?.estado;
-            // O temporizador já garantiu a pausa. Não repetimos a comparação de
-            // relógio aqui, pois relógios de clientes diferentes podem divergir.
-            if (!partida || partida.tipo !== "truco" || partida.fim || !partida.revelarVazaAte) return sala;
-            Truco.resolverVaza(partida, sala.jogadores || {});
-            return sala;
-        }).catch(erro => {
-            console.error("Erro ao resolver a vaza após a pausa:", erro);
-            ui.msg.textContent = "Não foi possível resolver a vaza. Recarregue a partida.";
-        });
-    }, espera);
-}
-
-// Usando requestAnimationFrame para agrupar updates
-let pendingSnapshot = null;
-let renderTimeout = null;
-onValue(salaRef, async snap => {
-    if (!snap.exists()) { location.href = "index.html"; return; }
-    pendingSnapshot = snap.val();
-    if (renderTimeout) return;
-    renderTimeout = setTimeout(async () => {
-        renderTimeout = null;
-        const sala = pendingSnapshot;
-        const js = sala.jogadores || {};
-        if (!js[jogadorId]) {
-            // criação do jogador...
-            return; // aguarda atualização
-        }
-        ui.nome.textContent = nomes[sala.jogo] || "Partida";
-        jogadores(js);
-        
-        // Verifica se o estado precisa ser criado
-        if (!sala.estado || Object.keys(sala.estado).length === 0) {
-            console.log("Criando estado para", sala.jogo, "com variação", sala.variacao);
-            await runTransaction(salaRef, atual => {
-                if (atual && (!atual.estado || Object.keys(atual.estado).length === 0)) {
-                    const ids = Object.entries(atual.jogadores || {}).sort(([, a], [, b]) => (a.ordem || 0) - (b.ordem || 0)).map(([id]) => id);
-                    const equipes = Object.fromEntries(Object.entries(atual.jogadores || {})
-                        .filter(([, jogador]) => jogador.equipe === "azul" || jogador.equipe === "vermelho")
-                        .map(([id, jogador]) => [id, jogador.equipe]));
-                    atual.estado = criarEstadoPorJogo(atual.jogo, ids, atual.variacao, equipes);
-                }
-                return atual;
-            });
-            return;
-        }
-        
-        const estado = normalizarEstado(sala.estado);
-        try {
-            render(estado, js, sala.jogo);
-        } catch (erro) {
-            console.error("Erro na renderização:", erro);
-        }
-        await removerAusentes(salaRef, estado, js);
-        resolverVazaDepoisDaPausa(estado);
-        executarBot(estado, js);
-    }, 50);
-}, erro => {
-    console.error(erro);
-    ui.msg.textContent = "Conexão com a sala perdida.";
-});
-
-ui.comprar.onclick = () => {
-    if (tipoAtual === "blackjack") Blackjack.acoesBlackjack(salaRef, jogadorId).comprar();
-    if (tipoAtual === "pife") Pife.acoesPife(salaRef, jogadorId).comprar();
-    if (tipoAtual === "buraco") Buraco.acoesBuraco(salaRef, jogadorId).comprar();
-};  
-ui.comprarDescarte.onclick = () => Buraco.acoesBuraco(salaRef, jogadorId).comprarDescarte();
-ui.passar.onclick = () => {
-    if (tipoAtual === "blackjack") Blackjack.acoesBlackjack(salaRef, jogadorId).parar();
-};
-ui.truco.querySelectorAll("button").forEach(b => b.onclick = () => Truco.acoesTruco(salaRef, jogadorId).pedir(Number(b.dataset.pedido)));
-ui.aceitar.onclick = () => Truco.acoesTruco(salaRef, jogadorId).responder("aceitar");
-ui.recusar.onclick = () => Truco.acoesTruco(salaRef, jogadorId).responder("recusar");
-ui.aumentar.onclick = () => Truco.acoesTruco(salaRef, jogadorId).responder("aumentar");
-ui.fold.onclick = () => Poker.acoesPoker(salaRef, jogadorId).fold();
-ui.call.onclick = () => Poker.acoesPoker(salaRef, jogadorId).call();
-ui.raise.onclick = () => Poker.acoesPoker(salaRef, jogadorId).raise(Number(ui.raiseValor.value) || 1);
-ui.nova.onclick = () => runTransaction(salaRef, sala => {
-    if (sala?.estado?.fim && !sala.estado.partidaEncerrada) {
-        const ids = Object.entries(sala.jogadores || {})
-            .sort(([, a], [, b]) => (a.ordem || 0) - (b.ordem || 0))
-            .map(([id]) => id);
-        const pontosDupla = sala.estado.pontosDupla;
-        const placar = sala.estado.placar;
-        const equipes = Object.fromEntries(Object.entries(sala.jogadores || {})
-            .filter(([, jogador]) => jogador.equipe === "azul" || jogador.equipe === "vermelho")
-            .map(([id, jogador]) => [id, jogador.equipe]));
-        sala.estado = criarEstadoPorJogo(sala.jogo, ids, sala.variacao, equipes);
-        if (pontosDupla) sala.estado.pontosDupla = pontosDupla;
-        if (placar) sala.estado.placar = placar;
-    }
-    return sala;
-});
-ui.trocar.onclick = () => update(salaRef, { status: "aguardando", estado: null }).then(() => location.href = `sala.html?codigo=${codigo}`);
-ui.sair.onclick = async () => { await desconector.cancel(); await remove(meuRef); sessionStorage.clear(); location.href = "index.html"; };
+async function acaoCarta(e,i){try{if(tipo==='truco')await Truco.acoesTruco(salaRef,jogadorId).jogar(i);else if(tipo==='pife')await Pife.acoesPife(salaRef,jogadorId).descartar(i);}catch(err){console.error(err);mostrarToast('Não foi possível executar a jogada.','warn');}}
+async function jogarBot(e,js,id){if(e.atual!==id||e.fim)return;try{if(tipo==='blackjack'){const p=Blackjack.pontuacao(e.maos[id]||[]);if(p<17)await Blackjack.acoesBlackjack(salaRef,id).comprar();else await Blackjack.acoesBlackjack(salaRef,id).parar();return;}if(tipo==='truco'){const mao=e.maos[id]||[];if(!e.pedido&&Truco.proximoPedido(e.valor)&&Math.random()<.18)await Truco.acoesTruco(salaRef,id).pedir(Truco.proximoPedido(e.valor));else{let best=0;for(let i=1;i<mao.length;i++){if(Truco.forca(mao[i],e.vira)>Truco.forca(mao[best],e.vira))best=i;}await Truco.acoesTruco(salaRef,id).jogar(best);}return;}if(tipo==='pife'){if(e.etapa==='comprar'){if(Math.random()<.35&&e.descarte?.length)await Pife.acoesPife(salaRef,id).comprarDescarte();else await Pife.acoesPife(salaRef,id).comprar();}else{const mao=e.maos[id]||[];let idx=mao.length-1;const conta={};mao.forEach(c=>conta[c.valor]=(conta[c.valor]||0)+1);const singles=mao.map((c,i)=>({c,i})).filter(x=>conta[x.c.valor]===1);if(singles.length)idx=singles.sort((a,b)=>rank(b.c)-rank(a.c))[0].i;await Pife.acoesPife(salaRef,id).descartar(idx);}}}catch(err){console.error('BOT',err);}}
+async function garantirEstado(sala){if(!sala.estado&&sala.dono===jogadorId){await runTransaction(salaRef,s=>{if(!s||s.estado||s.status!=='jogando')return s;const ids=Object.entries(s.jogadores||{}).sort(([,a],[,b])=>(a.ordem||0)-(b.ordem||0)).map(([id])=>id);s.estado=criarEstadoPorJogo(s.jogo,ids,s.variacao,Object.fromEntries(ids.map((id,i)=>[id,s.jogadores[id].equipe||((s.jogo==='truco'&&ids.length===4)?(i%2?'vermelho':'azul'):undefined)]).filter(([,v])=>v)));return s;});}}
+onValue(salaRef,async snap=>{if(!snap.exists()){ui.msg.textContent='A sala foi encerrada.';return;}const sala=snap.val();salaAtual=sala;if(sala.status!=='jogando'){location.href=`sala.html?codigo=${codigo}`;return;}if(sala.estado?.tipo==='buraco'||sala.estado?.tipo==='poker'){await update(salaRef,{estado:null,jogo:null,status:'aguardando'});return;}await garantirEstado(sala);if(sala.estado)render(sala.estado,sala.jogadores||{});});
+ui.comprar.onclick=()=>tipo==='blackjack'?Blackjack.acoesBlackjack(salaRef,jogadorId).comprar():Pife.acoesPife(salaRef,jogadorId).comprar();
+ui.passar.onclick=()=>tipo==='blackjack'?Blackjack.acoesBlackjack(salaRef,jogadorId).parar():null;
+ui.desc.onclick=()=>Pife.acoesPife(salaRef,jogadorId).comprarDescarte();
+ui.truco.querySelectorAll('button').forEach(b=>b.onclick=()=>Truco.acoesTruco(salaRef,jogadorId).pedir(Number(b.dataset.pedido)));
+ui.aceitar.onclick=()=>Truco.acoesTruco(salaRef,jogadorId).responder('aceitar');ui.aumentar.onclick=()=>Truco.acoesTruco(salaRef,jogadorId).responder('aumentar');ui.recusar.onclick=()=>Truco.acoesTruco(salaRef,jogadorId).responder('recusar');
+ui.nova.onclick=async()=>{if(!salaAtual?.estado)return;const act=jogos[tipo]?.acoesTruco||jogos[tipo]?.acoesPife;try{if(tipo==='truco')await Truco.acoesTruco(salaRef,jogadorId).novaRodada();else if(tipo==='blackjack'){const ids=salaAtual.estado.ids;await runTransaction(salaRef,s=>{if(!s?.estado?.fim)return s;const ids2=s.estado.ids;const deck=__shuffle(__deck());const maos=Object.fromEntries(ids2.map(x=>[x,[deck.pop(),deck.pop()]]));s.estado={...s.estado,deck,maos,dealer:[deck.pop(),deck.pop()],atual:ids2[0],parou:Object.fromEntries(ids2.map(x=>[x,false])),resultados:null,fim:false,resultado:""};return s;});}else {const ids=salaAtual.estado.ids;const deck=__shuffle(__deck());const maos=Object.fromEntries(ids.map(x=>[x,Array.from({length:9},()=>deck.pop())]));await update(salaRef,{estado:{tipo:'pife',ids,deck,maos,descarte:[deck.pop()],atual:ids[0],etapa:'comprar',placar:salaAtual.estado.placar||Object.fromEntries(ids.map(x=>[x,0])),fim:false,resultado:""}});}}catch(err){console.error(err);}};
+ui.trocar.onclick=()=>location.href=`sala.html?codigo=${codigo}`;ui.organizar.onclick=()=>{const ordem={A:14,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13};maoCache=[...maoCache].sort((a,b)=>(ordem[a.valor]||0)-(ordem[b.valor]||0)||a.naipe.localeCompare(b.naipe));ui.mao.innerHTML='';maoCache.forEach(c=>ui.mao.append(elementoCarta(c)));};
+function __deck(){return ["♠","♥","♦","♣"].flatMap(n=>["A","2","3","4","5","6","7","8","9","10","J","Q","K"].map(v=>({id:v+n,valor:v,naipe:n})));}function __shuffle(a){a=[...a];for(let i=a.length-1;i;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+$('btnSair').onclick=async()=>{await remove(meuRef);location.href='index.html';};

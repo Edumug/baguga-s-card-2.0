@@ -1,415 +1,52 @@
 import { database } from "./firebase-config.js";
 import { ref, onValue, get, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
 
-const params = new URLSearchParams(window.location.search);
-const codigo = params.get("codigo");
-const jogadorId = sessionStorage.getItem("jogadorId");
-
-if (!codigo || !jogadorId) {
-    window.location.href = "index.html";
-    throw new Error("Sala ou jogador não encontrados.");
+const p = new URLSearchParams(location.search); const codigo = p.get("codigo"); const jogadorId = sessionStorage.getItem("jogadorId");
+if (!codigo || !jogadorId) { location.href = "index.html"; throw new Error("Sala inválida"); }
+const $ = id => document.getElementById(id); const salaRef = ref(database, `salas/${codigo}`); const meuRef = ref(database, `salas/${codigo}/jogadores/${jogadorId}`);
+onDisconnect(meuRef).remove(); $("codigoExibido").textContent = codigo;
+const nomes = {truco:"Truco", blackjack:"Blackjack", pife:"Pife"};
+const limites = {truco:[2,4], blackjack:[1,7], pife:[2,4]};
+const btnEscolher = $("btnEscolherJogo"), btnIniciar = $("btnIniciar"), btnBot = $("btnAdicionarBot");
+let dono = false, ultimaSala = null;
+function limiteTexto(j){ const [a,b]=limites[j]||[2,4]; return a===b?`${a} jogador${a===1?"":"es"}`:`${a}–${b} jogadores`; }
+function mensagem(t, erro=false){ const e=$("mensagemSala"); e.textContent=t||""; e.classList.toggle("erro",!!erro); }
+function configuravel(j){ return j === "truco"; }
+function timesValidos(jogadores,j){ if(j!=="truco") return true; const a=Object.values(jogadores).filter(x=>x.equipe==="azul").length; const b=Object.values(jogadores).filter(x=>x.equipe==="vermelho").length; return Object.keys(jogadores).length===2 || (a===b && a+b===Object.keys(jogadores).length); }
+function renderPlayers(jogadores){
+  const box=$("listaJogadores"); box.innerHTML="";
+  const lista=Object.entries(jogadores).sort(([,a],[,b])=>(a.ordem||0)-(b.ordem||0));
+  lista.forEach(([id,j])=>{
+    const row=document.createElement("div"); row.className="player-row";
+    const who=document.createElement("div"); who.className="player-who";
+    const avatar=document.createElement("span"); avatar.className="player-avatar"; avatar.textContent=j.dono?"♛":j.tipo==="bot"?"◆":"●";
+    const info=document.createElement("div"); info.innerHTML=`<strong>${j.nome||"Jogador"}</strong><small>${j.tipo==="bot"?"BOT":j.dono?"Dono da sala":"Jogador"}</small>`;
+    who.append(avatar,info); row.appendChild(who);
+    if(ultimaSala?.jogo==="truco" && dono){
+      const team=document.createElement("div"); team.className="team-picker";
+      ["azul","vermelho"].forEach(eq=>{ const b=document.createElement("button"); b.type="button"; b.className=j.equipe===eq?"selected":""; b.textContent=eq==="azul"?"Azul":"Vermelha"; b.onclick=()=>update(ref(database,`salas/${codigo}/jogadores/${id}`),{equipe:eq}); team.appendChild(b); }); row.appendChild(team);
+    } else if(j.equipe){ const tag=document.createElement("span"); tag.className=`team-tag ${j.equipe}`; tag.textContent=j.equipe==="azul"?"AZUL":"VERMELHA"; row.appendChild(tag); }
+    if(dono && j.tipo==="bot"){ const rm=document.createElement("button"); rm.className="remove-player"; rm.textContent="×"; rm.title="Remover BOT"; rm.onclick=()=>remove(ref(database,`salas/${codigo}/jogadores/${id}`)); row.appendChild(rm); }
+    box.appendChild(row);
+  });
+  const count=document.createElement("div"); count.className="players-count"; count.textContent=`${lista.length}/8 jogadores`; box.appendChild(count);
 }
-
-const codigoExibido = document.getElementById("codigoExibido");
-const listaJogadores = document.getElementById("listaJogadores");
-const btnAdicionarBot = document.getElementById("btnAdicionarBot");
-const btnIniciar = document.getElementById("btnIniciar");
-const btnCopiarCodigo = document.getElementById("btnCopiarCodigo");
-const btnCopiarConvite = document.getElementById("btnCopiarConvite");
-const btnSair = document.getElementById("btnSair");
-const mensagem = document.getElementById("mensagemSala");
-const statusTexto = document.getElementById("statusTexto");
-
-const salaRef = ref(database, `salas/${codigo}`);
-const meuRef = ref(database, `salas/${codigo}/jogadores/${jogadorId}`);
-const desconector = onDisconnect(meuRef);
-desconector.remove();
-
-codigoExibido.textContent = codigo;
-
-const nomesJogos = {
-    truco: "Truco",
-    blackjack: "Blackjack",
-    pife: "Pife",
-    buraco: "Buraco",
-    poker: "Poker"
-};
-
-const nomesVariacoes = {
-    padrao: "Padrão",
-    paulista: "Paulista",
-    mineiro: "Mineiro",
-    aberto: "Aberto",
-    fechado: "Fechado",
-    stbl: "Fechado STBL",
-    texas: "Texas Hold'em"
-};
-
-const limites = {
-    truco: [2, 4],
-    buraco: [2, 4],
-    poker: [2, 8],
-    blackjack: [1, 7],
-    pife: [2, 4]
-};
-
-let souDono = false;
-let btnEscolherJogo = document.getElementById("btnEscolherJogo");
-let jogoEscolhido = document.getElementById("jogoEscolhido");
-let variacaoEscolhida = document.getElementById("variacaoEscolhida");
-
-// Compatibilidade com a versão antiga do sala.html: cria os elementos novos automaticamente.
-if (!jogoEscolhido) {
-    jogoEscolhido = document.createElement("h2");
-    jogoEscolhido.id = "jogoEscolhido";
-    jogoEscolhido.textContent = "Nenhum jogo escolhido";
-    const configuracao = btnIniciar?.parentElement;
-    const titulo = configuracao?.querySelector("h2");
-    if (titulo) titulo.replaceWith(jogoEscolhido);
+function atualizar(sala){
+  ultimaSala=sala; const jogadores=sala.jogadores||{}; const qtd=Object.keys(jogadores).length; dono=jogadores[jogadorId]?.dono===true || sala.dono===jogadorId;
+  renderPlayers(jogadores); btnBot.disabled=!dono || qtd>=8 || sala.status==="jogando"; btnEscolher.disabled=!dono || sala.status==="jogando"; btnIniciar.disabled=!dono || sala.status==="jogando" || !sala.jogo;
+  $("statusTexto").innerHTML=`<i></i> ${sala.status==="jogando"?"partida iniciada":sala.jogo?"jogo escolhido":"aguardando jogadores"}`;
+  $("jogoEscolhido").textContent=sala.jogo?nomes[sala.jogo]:"Nenhum jogo";
+  $("variacaoEscolhida").textContent=sala.jogo?`Variação: ${sala.variacao||"Padrão"}. ${limiteTexto(sala.jogo)}.` : "Escolha um jogo e uma variação para continuar.";
+  if(sala.jogo && (qtd<limites[sala.jogo][0] || qtd>limites[sala.jogo][1])){ btnIniciar.disabled=true; mensagem(`${nomes[sala.jogo]} precisa de ${limiteTexto(sala.jogo)}. Há ${qtd} na sala.`,true); }
+  else if(sala.jogo && !timesValidos(jogadores,sala.jogo)){ btnIniciar.disabled=true; mensagem("No Truco, as equipes precisam estar equilibradas.",true); }
+  else if(!sala.jogo) mensagem(dono?"Escolha o jogo para configurar a mesa.":"Aguardando o dono escolher o jogo.");
+  else mensagem(dono?"Tudo certo. Inicie a partida quando quiser.":"Aguardando o dono iniciar a partida.");
+  if(sala.status==="jogando") location.href=`jogo.html?codigo=${codigo}`;
 }
-
-if (!variacaoEscolhida) {
-    variacaoEscolhida = document.createElement("p");
-    variacaoEscolhida.id = "variacaoEscolhida";
-    variacaoEscolhida.textContent = "Escolha o jogo antes de iniciar a partida.";
-    const configuracao = btnIniciar?.parentElement;
-    const paragrafo = configuracao?.querySelector("p");
-    if (paragrafo) paragrafo.replaceWith(variacaoEscolhida);
-}
-
-if (!btnEscolherJogo && btnIniciar) {
-    btnEscolherJogo = document.createElement("button");
-    btnEscolherJogo.id = "btnEscolherJogo";
-    btnEscolherJogo.className = btnIniciar.className;
-    btnEscolherJogo.textContent = "Escolher jogo";
-    btnIniciar.parentElement.insertBefore(btnEscolherJogo, btnIniciar);
-}
-
-btnIniciar.textContent = "Iniciar partida";
-
-function limiteValido(jogo, quantidade) {
-    const [minimo, maximo] = limites[jogo] || [2, 4];
-    return quantidade >= minimo && quantidade <= maximo;
-}
-
-function usaEquipes(jogo) {
-    return jogo === "truco" || jogo === "buraco";
-}
-
-function equipesValidas(jogadores, jogo) {
-    if (!usaEquipes(jogo)) return true;
-    const lista = Object.values(jogadores);
-    const azuis = lista.filter(jogador => jogador.equipe === "azul").length;
-    const vermelhos = lista.filter(jogador => jogador.equipe === "vermelho").length;
-    return lista.length === azuis + vermelhos && azuis === vermelhos;
-}
-
-function textoLimite(jogo) {
-    const [minimo, maximo] = limites[jogo] || [2, 4];
-    return minimo === maximo
-        ? `${minimo} jogador${minimo === 1 ? "" : "es"}`
-        : `${minimo} a ${maximo} jogadores`;
-}
-
-function atualizarConfiguracao(sala, quantidade) {
-    const jogo = sala.jogo;
-
-    if (jogo) {
-        jogoEscolhido.textContent = nomesJogos[jogo] || jogo;
-        variacaoEscolhida.textContent = `Variação: ${nomesVariacoes[sala.variacao] || sala.variacao || "Padrão"}.`;
-        btnEscolherJogo.textContent = souDono ? "Alterar jogo" : "Jogo escolhido";
-    } else {
-        jogoEscolhido.textContent = "Nenhum jogo escolhido";
-        variacaoEscolhida.textContent = souDono
-            ? "Escolha o jogo primeiro. A partida só começa quando você clicar em iniciar."
-            : "Aguardando o dono escolher o jogo.";
-        btnEscolherJogo.textContent = "Escolher jogo";
-    }
-
-    btnEscolherJogo.disabled = !souDono || sala.status === "jogando";
-    btnIniciar.disabled = !souDono || sala.status === "jogando" || !jogo || !limiteValido(jogo, quantidade);
-
-    if (jogo && !limiteValido(jogo, quantidade)) {
-        mensagem.textContent = `${nomesJogos[jogo] || jogo} precisa de ${textoLimite(jogo)}. Há ${quantidade} na sala.`;
-    } else if (jogo && !equipesValidas(sala.jogadores || {}, jogo)) {
-        btnIniciar.disabled = true;
-        mensagem.textContent = "Defina equipes Azul e Vermelha com a mesma quantidade de jogadores antes de iniciar.";
-    }
-}
-
-onValue(salaRef, async snapshot => {
-    if (!snapshot.exists()) {
-        mensagem.textContent = "A sala foi encerrada.";
-        return;
-    }
-
-    const sala = snapshot.val();
-    const jogadores = sala.jogadores || {};
-    let jogadorAtual = jogadores[jogadorId];
-
-    if (!jogadorAtual && sala.dono === jogadorId) {
-        jogadorAtual = {
-            nome: sessionStorage.getItem("nomeJogador") || "Você",
-            tipo: "humano",
-            dono: true,
-            pontos: 0,
-            ordem: 0
-        };
-        await update(meuRef, jogadorAtual);
-        jogadores[jogadorId] = jogadorAtual;
-    }
-
-    if (!jogadorAtual) {
-        window.location.href = "index.html";
-        return;
-    }
-
-    souDono = jogadorAtual.dono === true || sala.dono === jogadorId;
-
-    const existeDono = Object.values(jogadores).some(j => j.dono === true);
-    if (!existeDono) {
-        const maisAntigo = Object.entries(jogadores)
-            .sort(([, a], [, b]) => (a.ordem || 0) - (b.ordem || 0))[0];
-        if (maisAntigo && maisAntigo[0] === jogadorId) {
-            await update(meuRef, { dono: true });
-            souDono = true;
-        }
-    }
-
-    mostrarJogadores(jogadores, souDono, sala.jogo);
-
-    const quantidade = Object.keys(jogadores).length;
-    btnAdicionarBot.disabled = !souDono || quantidade >= 8 || sala.status === "jogando";
-    statusTexto.textContent = sala.status === "jogando"
-        ? "Partida iniciada"
-        : sala.jogo
-            ? "Jogo escolhido"
-            : quantidade >= 1 ? "Pronto para configurar" : "Aguardando jogadores";
-
-    atualizarConfiguracao(sala, quantidade);
-
-    if (sala.status === "jogando") {
-        window.location.href = `jogo.html?codigo=${codigo}`;
-    }
-});
-
-function mostrarJogadores(jogadores, souDono, jogo) {
-    listaJogadores.innerHTML = "";
-    const lista = Object.entries(jogadores)
-        .sort(([, a], [, b]) => (a.ordem || 0) - (b.ordem || 0));
-
-    lista.forEach(([id, jogador]) => {
-        const div = document.createElement("div");
-        div.className = "jogador";
-
-        const info = document.createElement("div");
-        info.className = "jogador-info";
-        const avatar = document.createElement("div");
-        avatar.className = "avatar";
-        avatar.textContent = jogador.dono ? "👑" : jogador.tipo === "bot" ? "🤖" : "👤";
-
-        const dados = document.createElement("div");
-        const nome = document.createElement("div");
-        nome.className = "jogador-nome";
-        nome.textContent = jogador.nome || "Jogador";
-        const tipo = document.createElement("div");
-        tipo.className = "jogador-tipo";
-        tipo.textContent = jogador.tipo === "bot" ? "BOT" : jogador.dono ? "Dono da sala" : "Jogador";
-
-        dados.appendChild(nome);
-        dados.appendChild(tipo);
-        info.appendChild(avatar);
-        info.appendChild(dados);
-        div.appendChild(info);
-
-        if (usaEquipes(jogo)) {
-            if (souDono && salaPodeSerConfigurada()) {
-                const seletor = document.createElement("div");
-                seletor.className = "seletor-equipe";
-                ["azul", "vermelho"].forEach(equipe => {
-                    const botao = document.createElement("button");
-                    botao.className = `equipe-${equipe}${jogador.equipe === equipe ? " selecionada" : ""}`;
-                    botao.textContent = equipe === "azul" ? "Azul" : "Vermelha";
-                    botao.onclick = () => atribuirEquipe(id, equipe);
-                    seletor.appendChild(botao);
-                });
-                div.appendChild(seletor);
-            } else if (jogador.equipe) {
-                const equipe = document.createElement("span");
-                equipe.className = `equipe-atual ${jogador.equipe}`;
-                equipe.textContent = jogador.equipe === "azul" ? "AZUL" : "VERMELHA";
-                div.appendChild(equipe);
-            }
-        }
-
-        if (souDono && jogador.tipo === "bot") {
-            const remover = document.createElement("button");
-            remover.className = "btn-remover";
-            remover.textContent = "×";
-            remover.onclick = () => removerBot(id);
-            div.appendChild(remover);
-        }
-
-        listaJogadores.appendChild(div);
-    });
-
-    const contador = document.createElement("div");
-    contador.className = "contador";
-    contador.textContent = `${lista.length}/8 jogadores`;
-    listaJogadores.appendChild(contador);
-}
-
-function salaPodeSerConfigurada() {
-    return !btnIniciar.disabled || statusTexto.textContent !== "Partida iniciada";
-}
-
-async function atribuirEquipe(id, equipe) {
-    try {
-        const snapshot = await get(salaRef);
-        const sala = snapshot.val();
-        if (!sala || sala.status === "jogando" || sala.jogadores?.[jogadorId]?.dono !== true || !usaEquipes(sala.jogo)) return;
-        await update(ref(database, `salas/${codigo}/jogadores/${id}`), { equipe });
-    } catch (erro) {
-        console.error("Erro ao definir equipe:", erro);
-        mensagem.textContent = "Não foi possível definir a equipe.";
-    }
-}
-
-btnAdicionarBot.addEventListener("click", async () => {
-    try {
-        const snapshot = await get(salaRef);
-        if (!snapshot.exists()) return;
-
-        const sala = snapshot.val();
-        const jogadores = sala.jogadores || {};
-        const dono = jogadores[jogadorId];
-
-        if (!dono || dono.dono !== true) {
-            mensagem.textContent = "Somente o dono pode adicionar BOTs.";
-            return;
-        }
-
-        if (sala.status === "jogando") return;
-
-        const quantidade = Object.keys(jogadores).length;
-        if (quantidade >= 8) {
-            mensagem.textContent = "A sala está cheia.";
-            return;
-        }
-
-        const bots = Object.values(jogadores).filter(j => j.tipo === "bot");
-        const numero = bots.length + 1;
-        const botId = `bot_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-
-        await update(ref(database, `salas/${codigo}/jogadores`), {
-            [botId]: {
-                nome: `Bot ${numero}`,
-                tipo: "bot",
-                dono: false,
-                pontos: 0,
-                ordem: quantidade
-            }
-        });
-
-        mensagem.textContent = `Bot ${numero} adicionado!`;
-        setTimeout(() => mensagem.textContent = "", 3000);
-    } catch (erro) {
-        console.error("Erro ao adicionar BOT:", erro);
-        mensagem.textContent = "Erro ao adicionar BOT.";
-    }
-});
-
-async function removerBot(botId) {
-    try {
-        const snapshot = await get(salaRef);
-        if (!snapshot.exists()) return;
-        const sala = snapshot.val();
-        if (sala.status === "jogando" || sala.jogadores?.[jogadorId]?.dono !== true) return;
-        await remove(ref(database, `salas/${codigo}/jogadores/${botId}`));
-        mensagem.textContent = "BOT removido.";
-        setTimeout(() => mensagem.textContent = "", 2000);
-    } catch (erro) {
-        console.error(erro);
-    }
-}
-
-btnEscolherJogo.addEventListener("click", () => {
-    if (!souDono) return;
-    window.location.href = `seletor.html?codigo=${codigo}`;
-});
-
-btnIniciar.addEventListener("click", async () => {
-    try {
-        const snapshot = await get(salaRef);
-        if (!snapshot.exists()) return;
-
-        const sala = snapshot.val();
-        const jogadorAtual = sala.jogadores?.[jogadorId];
-        const jogadores = sala.jogadores || {};
-        const quantidade = Object.keys(jogadores).length;
-
-        if (!jogadorAtual || !jogadorAtual.dono) {
-            mensagem.textContent = "Somente o dono pode iniciar a partida.";
-            return;
-        }
-
-        if (!sala.jogo) {
-            mensagem.textContent = "Escolha um jogo antes de iniciar.";
-            return;
-        }
-
-        if (!limiteValido(sala.jogo, quantidade)) {
-            mensagem.textContent = `${nomesJogos[sala.jogo] || sala.jogo} precisa de ${textoLimite(sala.jogo)}. Há ${quantidade} na sala.`;
-            return;
-        }
-
-        if (!equipesValidas(jogadores, sala.jogo)) {
-            mensagem.textContent = "Defina equipes Azul e Vermelha com a mesma quantidade de jogadores antes de iniciar.";
-            return;
-        }
-
-        await update(salaRef, {
-            status: "jogando",
-            estado: null
-        });
-    } catch (erro) {
-        console.error(erro);
-        mensagem.textContent = "Erro ao iniciar a partida.";
-    }
-});
-
-btnCopiarCodigo.addEventListener("click", async () => {
-    try {
-        await navigator.clipboard.writeText(codigo);
-        mensagem.textContent = "Código copiado!";
-        setTimeout(() => mensagem.textContent = "", 2000);
-    } catch {
-        mensagem.textContent = "Não foi possível copiar.";
-    }
-});
-
-btnCopiarConvite.addEventListener("click", async () => {
-    try {
-        const linkSala = new URL("index.html", window.location.href);
-        const convite = `Venha jogar Baguga's Card Game comigo!\nCódigo da sala: ${codigo}\n${linkSala.href}`;
-        await navigator.clipboard.writeText(convite);
-        mensagem.textContent = "Convite copiado! Envie para seus amigos.";
-        setTimeout(() => mensagem.textContent = "", 2500);
-    } catch {
-        mensagem.textContent = "Não foi possível copiar o convite.";
-    }
-});
-
-btnSair.addEventListener("click", async () => {
-    try {
-        desconector.cancel();
-        await remove(meuRef);
-    } catch (erro) {
-        console.error(erro);
-    }
-    sessionStorage.clear();
-    localStorage.removeItem("codigoSala");
-    localStorage.removeItem("nomeJogador");
-    localStorage.removeItem("donoSala");
-    window.location.href = "index.html";
-});
+onValue(salaRef, async snap=>{ if(!snap.exists()){ mensagem("A sala foi encerrada.",true); return; } let sala=snap.val(); if(!sala.jogadores?.[jogadorId] && sala.dono===jogadorId){ await update(meuRef,{nome:sessionStorage.getItem("nomeJogador")||"Você",tipo:"humano",dono:true,ordem:0}); return; } if(!sala.jogadores?.[jogadorId]){ location.href="index.html"; return; } atualizar(sala); });
+btnBot.onclick=async()=>{ const s=(await get(salaRef)).val(); if(!s||!dono||s.status==="jogando")return; const n=Object.values(s.jogadores||{}).filter(x=>x.tipo==="bot").length+1; const id=`bot_${Date.now()}_${Math.random().toString(36).slice(2,7)}`; const qtd=Object.keys(s.jogadores||{}).length; await update(ref(database,`salas/${codigo}/jogadores/${id}`),{nome:`Bot ${n}`,tipo:"bot",dono:false,ordem:qtd}); };
+btnEscolher.onclick=()=>{ if(dono) location.href=`seletor.html?codigo=${codigo}`; };
+btnIniciar.onclick=async()=>{ const s=(await get(salaRef)).val(); const js=s?.jogadores||{}; const qtd=Object.keys(js).length; if(!s||!dono||!s.jogo)return; if(qtd<limites[s.jogo][0]||qtd>limites[s.jogo][1]||!timesValidos(js,s.jogo)){ mensagem("A configuração da mesa ainda não está válida.",true); return; } await update(salaRef,{status:"jogando",estado:null}); };
+$("btnCopiarCodigo").onclick=async()=>{ try{await navigator.clipboard.writeText(codigo);mensagem("Código copiado.");}catch{mensagem("Código: "+codigo);} };
+$("btnCopiarConvite").onclick=async()=>{const url=location.href;try{await navigator.clipboard.writeText(`Entre na minha sala do Baguga's Card Games: ${url}`);mensagem("Convite copiado.");}catch{mensagem(url);} };
+$("btnSair").onclick=async()=>{ await remove(meuRef); location.href="index.html"; };

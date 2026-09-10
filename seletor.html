@@ -1,61 +1,14 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escolher jogo</title>
-    <link rel="stylesheet" href="css/geral.css">
-    <link rel="stylesheet" href="css/seletor.css">
-</head>
-<body>
-
-<main class="seletor">
-    <header class="cabecalho">
-        <div><span>CONFIGURAÇÃO DA PARTIDA</span><h1>Escolha o jogo</h1></div>
-        <div class="codigo">Sala <strong id="codigoSala">-----</strong></div>
-    </header>
-
-    <section class="jogos">
-        <button class="jogo-card" data-jogo="truco">
-            <div class="icone">🃏</div><div class="nome">Truco</div>
-            <div class="descricao">Chegue a 12 pontos vencendo mãos e aumentando a aposta.</div>
-            <small class="jogadores">2 jogadores (mano a mano) ou 4 (duplas)</small>
-        </button>
-        <button class="jogo-card" data-jogo="blackjack">
-            <div class="icone">🂡</div><div class="nome">Blackjack</div>
-            <div class="descricao">Chegue o mais perto de 21 sem ultrapassar.</div>
-            <small class="jogadores">1 a 7 jogadores + dealer</small>
-        </button>
-        <button class="jogo-card" data-jogo="pife">
-            <div class="icone">🂡</div><div class="nome">Pife</div>
-            <div class="descricao">Forme trincas e sequências e bata primeiro.</div>
-            <small class="jogadores">2 a 4 jogadores</small>
-        </button>
-        <button class="jogo-card" data-jogo="buraco">
-            <div class="icone">♦️</div><div class="nome">Buraco</div>
-            <div class="descricao">Forme sequências e canastras para pontuar.</div>
-            <small class="jogadores">2 (mano a mano) ou 4 (duplas)</small>
-        </button>
-        <button class="jogo-card" data-jogo="poker">
-            <div class="icone">♣️</div><div class="nome">Poker</div>
-            <div class="descricao">Forme a melhor mão de 5 cartas.</div>
-            <small class="jogadores">2 a 8 jogadores</small>
-        </button>
-    </section>
-
-    <section id="variacoesBox" class="variacoes">
-        <span>VARIAÇÃO</span>
-        <select id="seletorVariacao"></select>
-    </section>
-
-    <p id="mensagem" class="mensagem" role="status" aria-live="polite"></p>
-
-    <footer>
-        <button id="btnVoltar" class="voltar">Voltar para a sala</button>
-        <button id="btnConfirmar" class="confirmar" disabled>Escolher jogo</button>
-    </footer>
-</main>
-
-<script type="module" src="js/seletor.js?v=3"></script>
-</body>
-</html>
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Escolher jogo · Baguga's</title><link rel="stylesheet" href="css/geral.css"><link rel="stylesheet" href="css/seletor.css"></head>
+<body><main class="app-shell selector-shell">
+<header class="app-header"><a class="brand" href="index.html"><span class="brand-mark"><span>♠</span><span>♥</span><span>♦</span><span>♣</span></span><span><b>Baguga's</b><small>Card Games</small></span></a><div class="room-code"><small>SALA</small><strong id="codigoSala">-----</strong></div></header>
+<section class="selector-head"><span class="eyebrow">CONFIGURE SUA MESA</span><h1>Escolha um jogo</h1><p>Selecione a experiência que combina com o grupo. Cada card mostra o número de jogadores e o ritmo da partida.</p></section>
+<section id="jogos" class="games-grid">
+<button class="game-card" data-jogo="truco"><span class="game-icon">♠</span><span class="game-copy"><strong>Truco</strong><small>Blefe, cartas fortes e decisões rápidas.</small></span><span class="game-meta">2 ou 4</span></button>
+<button class="game-card" data-jogo="blackjack"><span class="game-icon">21</span><span class="game-copy"><strong>Blackjack</strong><small>Chegue o mais perto de 21 contra o dealer.</small></span><span class="game-meta">1–7</span></button>
+<button class="game-card" data-jogo="pife"><span class="game-icon">♦</span><span class="game-copy"><strong>Pife</strong><small>Compre, organize e forme jogos para bater.</small></span><span class="game-meta">2–4</span></button>
+</section>
+<section class="variation card"><div><span class="eyebrow">VARIAÇÃO</span><h2 id="nomeSelecionado">Nenhum jogo selecionado</h2><p id="descricaoSelecionada">Escolha um card para ver as opções.</p></div><select id="seletorVariacao" disabled></select></section>
+<p id="mensagem" class="form-message" role="status" aria-live="polite"></p>
+<footer class="selector-footer"><button id="btnVoltar" class="btn btn-secondary">← Voltar para a sala</button><button id="btnConfirmar" class="btn btn-primary" disabled>Salvar escolha <span>→</span></button></footer>
+</main><script type="module" src="js/seletor.js?v=final1"></script></body></html>

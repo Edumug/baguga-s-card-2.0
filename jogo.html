@@ -1,108 +1,15 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partida</title>
-    <link rel="stylesheet" href="css/geral.css">
-    <link rel="stylesheet" href="css/jogo.css">
-</head>
-<body>
-
-<main class="mesa">
-    <header class="topo">
-        <div><span class="label">PARTIDA</span><strong id="nomeJogo">Carregando...</strong></div>
-        <div>Sala: <strong id="codigoSala">-----</strong></div>
-        <button id="btnTutorial" class="btn-tutorial" title="Tutorial">!</button>
-        <button id="btnSair">Sair</button>
-    </header>
-
-    <div id="tutorialJogo" class="tutorial-overlay escondido">
-        <div class="tutorial-painel">
-            <button id="fecharTutorial" class="fechar-tutorial" title="Fechar">×</button>
-            <h2>Como jogar?</h2>
-            <div id="textoTutorial"></div>
-        </div>
-    </div>
-
-    <section id="jogadorSuperior" class="jogador jogador-superior">
-        <div class="avatar">👤</div>
-        <div class="dados-jogador"><strong class="nome">—</strong><span class="tipo">—</span></div>
-    </section>
-
-    <section id="jogadorEsquerda" class="jogador jogador-esquerda">
-        <div class="avatar">👤</div>
-        <div class="dados-jogador"><strong class="nome">—</strong><span class="tipo">—</span></div>
-    </section>
-
-    <section id="jogadorDireita" class="jogador jogador-direita">
-        <div class="avatar">👤</div>
-        <div class="dados-jogador"><strong class="nome">—</strong><span class="tipo">—</span></div>
-    </section>
-
-    <section class="centro">
-        <div class="mesa-jogo">
-            <div class="info-partida">
-                <span id="infoRodada">Rodada 1</span>
-                <span id="infoAposta">Aposta: 1</span>
-            </div>
-            <div id="sequenciasAdversario" class="sequencias-area sequencias-adversario escondido"></div>
-            <div id="sequenciasPropria" class="sequencias-area sequencias-propria escondido"></div>
-            <div id="cartasMesa" class="cartas-mesa"></div>
-            <div id="mensagemJogo" class="mensagem-jogo">Carregando partida...</div>
-        </div>
-    </section>
-
-    <section id="jogadorPrincipal" class="jogador jogador-principal">
-        <div class="dados-jogador"><strong class="nome">Você</strong><span class="tipo">Jogador</span></div>
-        <div class="avatar">👤</div>
-    </section>
-
-    <section class="minhas-cartas">
-        <div id="minhasCartas" class="cartas"></div>
-    </section>
-
-    <section class="controles">
-        <button id="btnComprar">Comprar</button>
-        <button id="btnPassar">Passar</button>
-        <button id="btnBaixar" class="escondido">Baixar seleção</button>
-        <button id="btnComprarDescarte" class="escondido">Comprar descarte</button>
-        <div id="controlesTruco" class="controles-truco escondido">
-            <button data-pedido="3">Pedir Truco</button>
-            <button data-pedido="6">Pedir 6</button>
-            <button data-pedido="9">Pedir 9</button>
-            <button data-pedido="12">Pedir 12</button>
-        </div>
-        <div id="respostasTruco" class="respostas-truco escondido">
-            <button id="btnAceitarTruco">Aceitar</button>
-            <button id="btnRecusarTruco">Correr</button>
-            <button id="btnAumentarTruco">Aumentar</button>
-        </div>
-        <button id="btnNovaRodada" class="acao-fim escondido">Nova rodada</button>
-        <button id="btnTrocarJogo" class="escondido">Trocar jogo</button>
-        <div id="controlesPoker" class="controles-poker escondido">
-            <button id="btnFold">Desistir</button>
-            <button id="btnCall">Pagar</button>
-            <button id="btnRaise">Aumentar</button>
-            <input type="number" id="raiseValor" placeholder="Valor" min="1" style="width:60px; padding:4px;">
-        </div>
-    </section>
-
-    <aside class="placar">
-        <h2>Placar</h2>
-        <div id="listaPlacar"></div>
-    </aside>
-
-    <aside id="participantesExtras" class="participantes-extras escondido" aria-label="Outros participantes">
-        <h2>Participantes</h2>
-        <div id="listaParticipantesExtras"></div>
-    </aside>
-</main>
-
-<script type="module" src="js/jogo.js?v=10"></script>
-<script type="module" src="js/buraco-ui.js?v=2"></script>
-<script type="module" src="js/cartas-outros.js?v=2"></script>
-<script src="js/tutorial.js?v=1"></script>
-<script src="js/organizar-mao.js?v=1"></script>
-</body>
-</html>
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Partida · Baguga's</title><link rel="stylesheet" href="css/geral.css"><link rel="stylesheet" href="css/jogo.css"></head>
+<body><main class="game-app">
+<header class="game-header"><div class="brand-mini"><a href="index.html" class="brand"><span class="brand-mark"><span>♠</span><span>♥</span><span>♦</span><span>♣</span></span><span><b>Baguga's</b><small>Card Games</small></span></a></div><div class="match-title"><span class="eyebrow">PARTIDA</span><strong id="nomeJogo">Carregando…</strong></div><div class="match-tools"><span class="room-small">SALA <b id="codigoSala">-----</b></span><button id="btnTutorial" class="circle-button" title="Como jogar">?</button><button id="btnSair" class="btn btn-secondary small">Sair</button></div></header>
+<div id="tutorialJogo" class="tutorial-overlay escondido"><section class="tutorial-panel"><button id="fecharTutorial" class="close-button">×</button><span class="eyebrow">GUIA DA PARTIDA</span><h2 id="tutorialTitulo">Como jogar</h2><div id="textoTutorial"></div></section></div>
+<section class="table-layout">
+  <aside class="players-rail card"><div class="rail-head"><span class="eyebrow">MESA</span><strong>Jogadores</strong></div><div id="listaParticipantes"></div></aside>
+  <section class="board-wrap"><div class="board card"><div class="board-top"><div><span class="eyebrow" id="faseLabel">RODADA</span><strong id="infoRodada">—</strong></div><div class="turn-banner" id="mensagemJogo">Carregando partida…</div><div><span class="eyebrow">APOSTA / POTE</span><strong id="infoAposta">—</strong></div></div><div id="dealerArea" class="dealer-area"></div><div id="mesaExtra" class="mesa-extra"></div><div id="cartasMesa" class="table-cards"></div></div>
+    <div class="hand-panel card"><div class="hand-head"><div><span class="eyebrow">SUA MÃO</span><strong id="handHelp">Escolha uma carta</strong></div><button id="btnOrganizar" class="btn btn-secondary small">Organizar</button></div><div id="minhasCartas" class="cards-hand"></div></div>
+    <div class="action-bar card"><div class="actions-main"><button id="btnComprar" class="btn btn-primary">Comprar carta</button><button id="btnPassar" class="btn btn-secondary">Passar</button><button id="btnComprarDescarte" class="btn btn-secondary escondido">Pegar descarte</button><button id="btnBaixar" class="btn btn-secondary escondido">Baixar jogo</button></div><div id="controlesTruco" class="actions-extra escondido"><button data-pedido="3" class="btn btn-secondary">Truco</button><button data-pedido="6" class="btn btn-secondary">6</button><button data-pedido="9" class="btn btn-secondary">9</button><button data-pedido="12" class="btn btn-secondary">12</button></div><div id="respostasTruco" class="actions-extra escondido"><button id="btnAceitarTruco" class="btn btn-primary">Aceitar</button><button id="btnAumentarTruco" class="btn btn-secondary">Aumentar</button><button id="btnRecusarTruco" class="btn btn-secondary">Correr</button></div></div>
+    <div class="bottom-actions"><button id="btnNovaRodada" class="btn btn-primary escondido">Nova rodada</button><button id="btnTrocarJogo" class="btn btn-secondary">Voltar para a sala</button></div>
+  </section>
+  <aside class="score-rail card"><span class="eyebrow">PLACAR</span><div id="listaPlacar" class="score-list"></div><div class="score-hint">O placar é atualizado em tempo real para todos na sala.</div></aside>
+</section>
+</main><script type="module" src="js/jogo.js?v=final2"></script><script src="js/tutorial.js?v=final2"></script></body></html>

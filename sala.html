@@ -1,40 +1,21 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sala</title>
-    <link rel="stylesheet" href="css/geral.css">
-    <link rel="stylesheet" href="css/sala.css">
-</head>
-<body>
-
-<main class="sala">
-    <header class="cabecalho">
-        <div><span class="subtitulo">SALA PRIVADA</span><h1>Sala de jogo</h1></div>
-        <div class="codigo-box"><span>CÓDIGO</span><strong id="codigoExibido">-----</strong><button id="btnCopiarCodigo">Copiar código</button><button id="btnCopiarConvite">Copiar convite</button></div>
-    </header>
-
-    <section class="conteudo">
-        <div class="painel jogadores-panel">
-            <div class="painel-titulo">
-                <div><span class="subtitulo">PARTICIPANTES</span><h2>Jogadores</h2></div>
-                <span id="statusTexto" class="status">Aguardando</span>
-            </div>
-            <div id="listaJogadores" class="lista-jogadores"></div>
-            <button id="btnAdicionarBot" class="btn-bot">🤖 Adicionar BOT</button>
-        </div>
-        <div class="painel configuracao">
-            <span class="subtitulo">PRÓXIMO PASSO</span>
-            <h2>Tudo pronto?</h2>
-            <p id="variacaoEscolhida">Escolha um jogo para ver quantos participantes são necessários.</p>
-            <div id="mensagemSala" class="mensagem" role="status" aria-live="polite"></div>
-            <button id="btnIniciar" class="btn-principal">Escolher jogo</button>
-            <button id="btnSair" class="btn-sair">Sair da sala</button>
-        </div>
-    </section>
-</main>
-
-<script type="module" src="js/sala.js?v=2"></script>
-</body>
-</html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sala · Baguga's</title><link rel="stylesheet" href="css/geral.css"><link rel="stylesheet" href="css/sala.css"></head>
+<body><main class="app-shell">
+<header class="app-header"><a class="brand" href="index.html"><span class="brand-mark"><span>♠</span><span>♥</span><span>♦</span><span>♣</span></span><span><b>Baguga's</b><small>Card Games</small></span></a><div class="room-code"><small>CÓDIGO DA SALA</small><strong id="codigoExibido">-----</strong><button id="btnCopiarCodigo" class="icon-button" title="Copiar código">⧉</button></div></header>
+<section class="room-layout">
+  <div class="card room-main">
+    <div class="section-title"><div><span class="eyebrow">SALA PRIVADA</span><h1>Prepare a partida</h1></div><span id="statusTexto" class="live-status"><i></i> aguardando</span></div>
+    <div id="listaJogadores" class="players-list"></div>
+    <button id="btnAdicionarBot" class="btn btn-secondary full">＋ Adicionar BOT</button>
+    <p class="room-tip">Dica: em Truco, o dono pode dividir os jogadores entre as equipes. Nos demais jogos, a posição é individual.</p>
+  </div>
+  <aside class="card room-side">
+    <span class="eyebrow">CONFIGURAÇÃO</span><h2 id="jogoEscolhido">Nenhum jogo</h2><p id="variacaoEscolhida">Escolha um jogo e uma variação para continuar.</p>
+    <div class="config-actions"><button id="btnEscolherJogo" class="btn btn-secondary">Escolher jogo</button><button id="btnIniciar" class="btn btn-primary">Iniciar partida <span>→</span></button></div>
+    <p id="mensagemSala" class="form-message" role="status" aria-live="polite"></p>
+    <button id="btnCopiarConvite" class="text-button">Copiar convite completo</button>
+    <button id="btnSair" class="text-button danger">Sair da sala</button>
+  </aside>
+</section>
+</main><script type="module" src="js/sala.js?v=final1"></script></body></html>

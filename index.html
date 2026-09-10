@@ -1,48 +1,58 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Baguga's Card Game</title>
-    <link rel="stylesheet" href="css/geral.css">
-    <link rel="stylesheet" href="css/menu.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111111">
+  <title>Baguga's Card Games</title>
+  <link rel="stylesheet" href="css/geral.css">
+  <link rel="stylesheet" href="css/menu.css">
 </head>
 <body>
+  <main class="page-shell home-page">
+    <header class="brandbar">
+      <a class="brand" href="index.html" aria-label="Baguga's Card Games">
+        <span class="brand-mark"><span>♠</span><span>♥</span><span>♦</span><span>♣</span></span>
+        <span><b>Baguga's</b><small>Card Games</small></span>
+      </a>
+      <span class="pill">JOGOS ONLINE</span>
+    </header>
 
-<header class="topo">
-    <div class="logo">
-        <div class="cartas-logo">
-            <span>♠</span><span>♥</span><span>♦</span><span>♣</span>
+    <section class="hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">SIMPLES DE ENTRAR · DIFÍCIL DE DOMINAR</span>
+        <h1>Uma mesa de cartas feita para jogar, não para se perder.</h1>
+        <p>Crie uma sala, chame seus amigos e escolha entre Truco, Blackjack e Pife. Tudo em uma interface limpa, rápida e pensada para deixar a próxima jogada óbvia.</p>
+        <div class="feature-row">
+          <span>♠ Multiplayer</span><span>♥ Bots</span><span>♦ Tutoriais</span><span>♣ Salas privadas</span>
         </div>
-        <h1>Baguga's Card Game</h1>
-    </div>
-</header>
+      </div>
 
-<main class="inicio">
-    <section class="painel-criar">
-        <button id="btnCriarSala" class="btn btn-principal">🃏 Criar Sala</button>
-        <div class="separador"><span></span><label>OU</label><span></span></div>
-        <div class="entrada">
-            <label for="nomeJogador">Seu nome</label>
-            <input id="nomeJogador" type="text" maxlength="24" placeholder="Digite seu nome" autocomplete="name">
-            <label for="codigoSala">Código da sala</label>
-            <div class="entrada-linha">
-                <input id="codigoSala" type="text" maxlength="5" placeholder="ABCDE" autocomplete="off">
-                <button id="btnEntrarSala" class="btn btn-secundario">Entrar</button>
-            </div>
+      <section class="card panel home-panel" aria-label="Entrar ou criar sala">
+        <div class="panel-head">
+          <div><span class="eyebrow">COMECE AGORA</span><h2>Sua mesa</h2></div>
+          <span class="status-dot"><i></i> online</span>
         </div>
-        <p id="mensagem" class="mensagem" role="status" aria-live="polite"></p>
+        <label for="nomeJogador">Seu nome</label>
+        <input id="nomeJogador" type="text" maxlength="24" placeholder="Como seus amigos vão te chamar?" autocomplete="nickname">
+        <button id="btnCriarSala" class="btn btn-primary btn-large">Criar nova sala <span>→</span></button>
+        <div class="or-line"><span></span><b>ou entre em uma sala</b><span></span></div>
+        <div class="join-row">
+          <input id="codigoSala" type="text" maxlength="5" placeholder="CÓDIGO" inputmode="text" autocomplete="off" aria-label="Código da sala">
+          <button id="btnEntrarSala" class="btn btn-secondary">Entrar</button>
+        </div>
+        <p id="mensagem" class="form-message" role="status" aria-live="polite"></p>
+      </section>
     </section>
 
-    <section class="painel-visual">
-        <div class="cartas-grandes"><div>♠</div><div>♥</div><div>♦</div><div>♣</div></div>
-        <h2>Jogue com seus amigos</h2>
-        <p>Crie uma sala, convide seus amigos e escolha seu jogo de cartas.</p>
+    <section class="game-strip">
+      <article><strong>Truco</strong><span>2 ou 4 jogadores · blefe e vazas</span></article>
+      <article><strong>Blackjack</strong><span>1 a 7 jogadores · contra o dealer</span></article>
+      <article><strong>Pife</strong><span>2 a 4 jogadores · monte combinações</span></article>
     </section>
-</main>
 
-<footer class="rodape"><span>♠</span><span>♥</span><span>♣</span><span>♦</span></footer>
-
-<script type="module" src="js/menu.js?v=2"></script>
+    <footer class="site-footer"><span>Baguga's Card Games</span><span>Feito para partidas rápidas entre amigos.</span></footer>
+  </main>
+  <script type="module" src="js/menu.js?v=final1"></script>
 </body>
 </html>
