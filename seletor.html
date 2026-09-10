@@ -1,14 +1,40 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Escolher jogo · Baguga's</title><link rel="stylesheet" href="css/geral.css"><link rel="stylesheet" href="css/seletor.css"></head>
-<body><main class="app-shell selector-shell">
-<header class="app-header"><a class="brand" href="index.html"><span class="brand-mark"><span>♠</span><span>♥</span><span>♦</span><span>♣</span></span><span><b>Baguga's</b><small>Card Games</small></span></a><div class="room-code"><small>SALA</small><strong id="codigoSala">-----</strong></div></header>
-<section class="selector-head"><span class="eyebrow">CONFIGURE SUA MESA</span><h1>Escolha um jogo</h1><p>Selecione a experiência que combina com o grupo. Cada card mostra o número de jogadores e o ritmo da partida.</p></section>
-<section id="jogos" class="games-grid">
-<button class="game-card" data-jogo="truco"><span class="game-icon">♠</span><span class="game-copy"><strong>Truco</strong><small>Blefe, cartas fortes e decisões rápidas.</small></span><span class="game-meta">2 ou 4</span></button>
-<button class="game-card" data-jogo="blackjack"><span class="game-icon">21</span><span class="game-copy"><strong>Blackjack</strong><small>Chegue o mais perto de 21 contra o dealer.</small></span><span class="game-meta">1–7</span></button>
-<button class="game-card" data-jogo="pife"><span class="game-icon">♦</span><span class="game-copy"><strong>Pife</strong><small>Compre, organize e forme jogos para bater.</small></span><span class="game-meta">2–4</span></button>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Escolher jogo · Baguga's</title>
+<link rel="stylesheet" href="css/geral.css?v=final2">
+<link rel="stylesheet" href="css/seletor.css?v=final3">
+</head>
+<body>
+<main class="app-shell selector-shell">
+<header class="app-header">
+<a class="brand" href="index.html">
+<span class="brand-mark"><span>♠</span><span>♥</span><span>♦</span><span>♣</span></span>
+<span><b>Baguga's</b><small>Card Games</small></span>
+</a>
+<div class="room-code"><small>SALA</small><strong id="codigoSala">-----</strong></div>
+</header>
+<section class="selector-head">
+<span class="eyebrow">CONFIGURE SUA MESA</span>
+<h1>Escolha um jogo</h1>
+<p>Selecione a experiência que combina com o grupo. Cada opção informa quantas pessoas podem jogar e o estilo da partida.</p>
 </section>
-<section class="variation card"><div><span class="eyebrow">VARIAÇÃO</span><h2 id="nomeSelecionado">Nenhum jogo selecionado</h2><p id="descricaoSelecionada">Escolha um card para ver as opções.</p></div><select id="seletorVariacao" disabled></select></section>
+<section id="jogos" class="games-grid" aria-label="Jogos disponíveis">
+<button type="button" class="game-card" data-jogo="truco"><span class="game-icon">♠</span><span class="game-copy"><strong>Truco</strong><small>Blefe, vazas e decisões rápidas.</small></span><span class="game-meta">2 ou 4</span></button>
+<button type="button" class="game-card" data-jogo="blackjack"><span class="game-icon">21</span><span class="game-copy"><strong>Blackjack</strong><small>Chegue o mais perto de 21 contra o dealer.</small></span><span class="game-meta">1–7</span></button>
+<button type="button" class="game-card" data-jogo="pife"><span class="game-icon">♦</span><span class="game-copy"><strong>Pife</strong><small>Compre, organize combinações e bata primeiro.</small></span><span class="game-meta">2–4</span></button>
+</section>
+<section class="variation card" aria-live="polite">
+<div class="variation-copy"><span class="eyebrow">VARIAÇÃO</span><h2 id="nomeSelecionado">Nenhum jogo selecionado</h2><p id="descricaoSelecionada">Escolha uma das opções acima para configurar sua partida.</p></div>
+<select id="seletorVariacao" disabled aria-label="Variação do jogo"></select>
+</section>
 <p id="mensagem" class="form-message" role="status" aria-live="polite"></p>
-<footer class="selector-footer"><button id="btnVoltar" class="btn btn-secondary">← Voltar para a sala</button><button id="btnConfirmar" class="btn btn-primary" disabled>Salvar escolha <span>→</span></button></footer>
-</main><script type="module" src="js/seletor.js?v=final1"></script></body></html>
+<footer class="selector-footer">
+<button id="btnVoltar" type="button" class="btn btn-secondary">← Voltar para a sala</button>
+<button id="btnConfirmar" type="button" class="btn btn-primary" disabled>Salvar escolha <span>→</span></button>
+</footer>
+</main>
+<script type="module" src="js/seletor.js?v=final3"></script>
+</body></html>
